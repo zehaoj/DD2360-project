@@ -233,6 +233,128 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
 } // end of the mover
 
 
+/** mover_GPU: kernel function*/
+__global__ void mover_GPU(struct particles* devicePart, struct EMfield* deviceField,
+                          struct grid* deviceGrd, struct parameters* deviceParam){
+    int id = blockDim.x * blockIdx.x + threadIdx.x; // thread ID
+    
+    if (id >= devicePart->nop) 
+        return;
+    
+    FPpart dt_sub_cycling = (FPpart) deviceParam->dt/((double) devicePart->n_sub_cycles);
+    FPpart dto2 = .5*dt_sub_cycling, qomdt2 = devicePart->qom*dto2/deviceParam->c;
+    FPpart omdtsq, denom, ut, vt, wt, udotb;
+    
+    FPfield Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
+
+    FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
+    xptilde = devicePart->x[id];
+    yptilde = devicePart->y[id];
+    zptilde = devicePart->z[id];
+
+    int ix,iy,iz;
+    FPfield weight[2][2][2];
+    FPfield xi[2], eta[2], zeta[2];
+
+    for(int innter=0; innter < devicePart->NiterMover; innter++){
+        // interpolation G-->P
+        ix = 2 +  int((devicePart->x[id] - deviceGrd->xStart)*deviceGrd->invdx);
+        iy = 2 +  int((devicePart->y[id] - deviceGrd->yStart)*deviceGrd->invdy);
+        iz = 2 +  int((devicePart->z[id] - deviceGrd->zStart)*deviceGrd->invdz);
+                
+        // calculate weights
+        xi[0]   = devicePart->x[id] - deviceGrd->XN[ix - 1][iy][iz];
+        eta[0]  = devicePart->y[id] - deviceGrd->YN[ix][iy - 1][iz];
+        zeta[0] = devicePart->z[id] - deviceGrd->ZN[ix][iy][iz - 1];
+        xi[1]   = deviceGrd->XN[ix][iy][iz] - devicePart->x[id];
+        eta[1]  = deviceGrd->YN[ix][iy][iz] - devicePart->y[id];
+        zeta[1] = deviceGrd->ZN[ix][iy][iz] - devicePart->z[id];
+        for (int ii = 0; ii < 2; ii++)
+            for (int jj = 0; jj < 2; jj++)
+                for (int kk = 0; kk < 2; kk++)
+                    weight[ii][jj][kk] = xi[ii] * eta[jj] * zeta[kk] * deviceGrd->invVOL;
+                
+        // set to zero local electric and magnetic field
+        Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
+                
+        for (int ii=0; ii < 2; ii++)
+            for (int jj=0; jj < 2; jj++)
+                for(int kk=0; kk < 2; kk++){
+                    Exl += weight[ii][jj][kk]*deviceField->Ex[ix- ii][iy -jj][iz- kk ];
+                    Eyl += weight[ii][jj][kk]*deviceField->Ey[ix- ii][iy -jj][iz- kk ];
+                    Ezl += weight[ii][jj][kk]*deviceField->Ez[ix- ii][iy -jj][iz -kk ];
+                    Bxl += weight[ii][jj][kk]*deviceField->Bxn[ix- ii][iy -jj][iz -kk ];
+                    Byl += weight[ii][jj][kk]*deviceField->Byn[ix- ii][iy -jj][iz -kk ];
+                    Bzl += weight[ii][jj][kk]*deviceField->Bzn[ix- ii][iy -jj][iz -kk ];
+                    }
+                
+        // end interpolation
+        omdtsq = qomdt2*qomdt2*(Bxl*Bxl+Byl*Byl+Bzl*Bzl);
+        denom = 1.0/(1.0 + omdtsq);
+        
+        // solve the position equation
+        ut= devicePart->u[id] + qomdt2*Exl;
+        vt= devicePart->v[id] + qomdt2*Eyl;
+        wt= devicePart->w[id] + qomdt2*Ezl;
+        udotb = ut*Bxl + vt*Byl + wt*Bzl;
+        
+        // solve the velocity equation
+        uptilde = (ut+qomdt2*(vt*Bzl -wt*Byl + qomdt2*udotb*Bxl))*denom;
+        vptilde = (vt+qomdt2*(wt*Bxl -ut*Bzl + qomdt2*udotb*Byl))*denom;
+        wptilde = (wt+qomdt2*(ut*Byl -vt*Bxl + qomdt2*udotb*Bzl))*denom;
+        
+        // update position
+        devicePart->x[id] = xptilde + uptilde*dto2;
+        devicePart->y[id] = yptilde + vptilde*dto2;
+        devicePart->z[id] = zptilde + wptilde*dto2;    
+    }
+}
+
+/** mover_PC_GPU: GPU version of mover_PC */
+int mover_PC_GPU(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param) 
+{
+    std::cout << "GPU ***  MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;
+    particles* devicePart;
+    EMfield* deviceField;
+    grid* deviceGrd;
+    parameters* deviceParam;
+
+    // Allocate GPU memory 
+    cudaMalloc(&devicePart, sizeof(particles));
+    cudaMalloc(&deviceField, sizeof(EMfield));
+    cudaMalloc(&deviceGrd, sizeof(grid));
+    cudaMalloc(&deviceParam, sizeof(parameters));
+
+    // Copy from Host to Device
+    cudaMemcpy(devicePart, part, sizeof(particles), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceField, field, sizeof(EMfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceGrd, grd, sizeof(grid), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceParam, param, sizeof(parameters), cudaMemcpyHostToDevice);
+    
+    // start subcycling
+    for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
+        // move each particle with new fields
+        dim3 dimGrid(1024,1,1);
+        dim3 dimBlock(1024,1,1);
+        // Call the CUDA kernel function
+        mover_GPU<<<dimGrid,dimBlock>>>(devicePart, deviceField,deviceGrd,deviceParam);    
+    }
+
+    // Copy memory back from Device to Host 
+    cudaMemcpy(part, devicePart, sizeof(particles), cudaMemcpyDeviceToHost);
+    cudaMemcpy(field, deviceField, sizeof(EMfield), cudaMemcpyDeviceToHost);
+    cudaMemcpy(grd, deviceGrd, sizeof(grid), cudaMemcpyDeviceToHost);
+    cudaMemcpy(param, deviceParam, sizeof(parameters), cudaMemcpyDeviceToHost);
+
+    // Free device memory
+    cudaFree(devicePart);
+    cudaFree(deviceField);
+    cudaFree(deviceGrd);
+    cudaFree(deviceParam);
+
+    return 0; // exit successcully
+}
+
 
 /** Interpolation Particle --> Grid: This is for species */
 void interpP2G(struct particles* part, struct interpDensSpecies* ids, struct grid* grd)
