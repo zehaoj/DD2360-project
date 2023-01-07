@@ -68,7 +68,6 @@ void particle_allocate(struct parameters*, struct particles*, int);
 void particle_deallocate(struct particles*);
 
 /** particle mover */
-int mover_PC(struct particles*, struct EMfield*, struct grid*, struct parameters*);
 
 void pre_locate(struct EMfield*, struct EMfield*, struct EMfield**, struct grid*, struct grid*, struct grid**, struct parameters*, struct parameters**);
 

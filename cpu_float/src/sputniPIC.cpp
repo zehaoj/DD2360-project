@@ -83,6 +83,7 @@ int main(int argc, char **argv){
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
     // **********************************************************//
+    std::cout << "CPU float" << std::endl;
     for (int cycle = param.first_cycle_n; cycle < (param.first_cycle_n + param.ncycles); cycle++) {
 
         std::cout << std::endl;
@@ -99,10 +100,8 @@ int main(int argc, char **argv){
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++){
-            // mover_PC(&part[is],&field,&grd,&param);
-            // mover_PC_gpu_launcher_ori(&part[is],&field,&grd,&param);
-            mover_PC_gpu_launcher_opt(&part[is], &part_gpu, part_gpu_ptr, field_gpu_ptr, grid_gpu_ptr, param_gpu_ptr);
-          }
+            mover_PC(&part[is],&field,&grd,&param);
+        }
         eMover += (cpuSecond() - iMover); // stop timer for mover
 
         // interpolation particle to grid
