@@ -172,9 +172,9 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
             for(int innter=0; innter < part_gpu->NiterMover; innter++){
                 // interpolation G-->P
 
-                ix = 2 +  int((x_idx - __float2half2_rn2((grid_gpu->xStart)*grid_gpu->invdx)));
-                iy = 2 +  int((y_idx - __float2half2_rn2((grid_gpu->yStart)*grid_gpu->invdy)));
-                iz = 2 +  int((z_idx - __float2half2_rn2((grid_gpu->zStart)*grid_gpu->invdz)));
+                ix = 2 +  int((x_idx - __float2half2_rn((grid_gpu->xStart)*grid_gpu->invdx)));
+                iy = 2 +  int((y_idx - __float2half2_rn((grid_gpu->yStart)*grid_gpu->invdy)));
+                iz = 2 +  int((z_idx - __float2half2_rn((grid_gpu->zStart)*grid_gpu->invdz)));
 
                 // calculate weights
                 ///////////////////////////////////////////
@@ -184,12 +184,12 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 // So we should use XN_flat instead, which is an 1D array (generated in FPfield* XN_flat; in Grid.h)
                 ///////////////////////////////////////////
 
-                xi[0]   = x_idx - __float2half2_rn2(grid_gpu->XN_flat[get_idx(ix - 1, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]);
-                eta[0]  = y_idx - __float2half2_rn2(grid_gpu->YN_flat[get_idx(ix, iy - 1, iz, grid_gpu->nyn, grid_gpu->nzn)]);
-                zeta[0] = z_idx - __float2half2_rn2(grid_gpu->ZN_flat[get_idx(ix, iy, iz - 1, grid_gpu->nyn, grid_gpu->nzn)]);
-                xi[1]   = __float2half2_rn2(grid_gpu->XN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - x_idx;
-                eta[1]  = __float2half2_rn2(grid_gpu->YN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - y_idx;
-                zeta[1] = __float2half2_rn2(grid_gpu->ZN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - z_idx;
+                xi[0]   = x_idx - __float2half2_rn(grid_gpu->XN_flat[get_idx(ix - 1, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]);
+                eta[0]  = y_idx - __float2half2_rn(grid_gpu->YN_flat[get_idx(ix, iy - 1, iz, grid_gpu->nyn, grid_gpu->nzn)]);
+                zeta[0] = z_idx - __float2half2_rn(grid_gpu->ZN_flat[get_idx(ix, iy, iz - 1, grid_gpu->nyn, grid_gpu->nzn)]);
+                xi[1]   = __float2half2_rn(grid_gpu->XN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - x_idx;
+                eta[1]  = __float2half2_rn(grid_gpu->YN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - y_idx;
+                zeta[1] = __float2half2_rn(grid_gpu->ZN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - z_idx;
 
                 for (int ii = 0; ii < 2; ii++)
                     for (int jj = 0; jj < 2; jj++)
