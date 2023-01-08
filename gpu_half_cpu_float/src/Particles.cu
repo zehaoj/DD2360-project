@@ -5,7 +5,7 @@
 #include <cuda_fp16.h>
 
 
-typedef __halfnewDT;
+typedef __half newDT;
 
 # define THREADS 32
 
@@ -93,7 +93,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
     }
 
     // FPpart qom;
-    newDT qomGPU = __float2halfpart_gpu->qom);
+    newDT qomGPU = __float2half(part_gpu->qom);
 
     // // FPpart u0, v0, w0;
     // newDT u0GPU = __float2half(part_gpu->u0)
@@ -104,12 +104,12 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
     // newDT vthGPU = __float2half(part_gpu->vth)
     // newDT wthGPU = __float2half(part_gpu->wth)
 
-    newDT x_idx = __float2halfpart_gpu->x[idx]);
-    newDT y_idx = __float2halfpart_gpu->y[idx]);
-    newDT z_idx = __float2halfpart_gpu->z[idx]);
-    newDT u_idx = __float2halfpart_gpu->u[idx]);
-    newDT v_idx = __float2halfpart_gpu->v[idx]);
-    newDT w_idx = __float2halfpart_gpu->w[idx]);
+    newDT x_idx = __float2half(part_gpu->x[idx]);
+    newDT y_idx = __float2half(part_gpu->y[idx]);
+    newDT z_idx = __float2half(part_gpu->z[idx]);
+    newDT u_idx = __float2half(part_gpu->u[idx]);
+    newDT v_idx = __float2half(part_gpu->v[idx]);
+    newDT w_idx = __float2half(part_gpu->w[idx]);
     // /** particle arrays: 1D arrays[npmax] */
     // FPpart* x; FPpart*  y; FPpart* z; FPpart* u; FPpart* v; FPpart* w;
     // /** q must have precision of interpolated quantities: typically double. Not used in mover */
@@ -118,10 +118,10 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
 
     // auxiliary variables
     // newDT dt_sub_cycling = (newDT) param_gpu->dt/((double) part_gpu->n_sub_cycles);
-    newDT dt_sub_cycling = __double2halfparam_gpu->dt)/__int2half_n(part_gpu->n_sub_cycles);
+    newDT dt_sub_cycling = __double2half(param_gpu->dt)/__int2half_n(part_gpu->n_sub_cycles);
 
-    newDT dto2 = __float2half0.5) * dt_sub_cycling;
-    newDT qomdt2 = qomGPU*dto2/__double2halfparam_gpu->c);
+    newDT dto2 = __float2half(0.5) * dt_sub_cycling;
+    newDT qomdt2 = qomGPU*dto2/__double2half(param_gpu->c);
     newDT omdtsq, denom, ut, vt, wt, udotb;
     // local (to the particle) electric and magnetic field_gpu
     newDT Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
@@ -171,9 +171,9 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
             for(int innter=0; innter < part_gpu->NiterMover; innter++){
                 // interpolation G-->P
 
-                ix = 2 +  int((x_idx - __float2half(grid_gpu->xStart)*grid_gpu->invdx)));
-                iy = 2 +  int((y_idx - __float2half(grid_gpu->yStart)*grid_gpu->invdy)));
-                iz = 2 +  int((z_idx - __float2half(grid_gpu->zStart)*grid_gpu->invdz)));
+                ix = 2 +  int((x_idx - __float2half((grid_gpu->xStart)*grid_gpu->invdx)));
+                iy = 2 +  int((y_idx - __float2half((grid_gpu->yStart)*grid_gpu->invdy)));
+                iz = 2 +  int((z_idx - __float2half((grid_gpu->zStart)*grid_gpu->invdz)));
 
                 // calculate weights
                 ///////////////////////////////////////////
@@ -183,17 +183,17 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 // So we should use XN_flat instead, which is an 1D array (generated in FPfield* XN_flat; in Grid.h)
                 ///////////////////////////////////////////
 
-                xi[0]   = x_idx - __float2halfgrid_gpu->XN_flat[get_idx(ix - 1, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]);
-                eta[0]  = y_idx - __float2halfgrid_gpu->YN_flat[get_idx(ix, iy - 1, iz, grid_gpu->nyn, grid_gpu->nzn)]);
-                zeta[0] = z_idx - __float2halfgrid_gpu->ZN_flat[get_idx(ix, iy, iz - 1, grid_gpu->nyn, grid_gpu->nzn)]);
-                xi[1]   = __float2halfgrid_gpu->XN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - x_idx;
-                eta[1]  = __float2halfgrid_gpu->YN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - y_idx;
-                zeta[1] = __float2halfgrid_gpu->ZN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - z_idx;
+                xi[0]   = x_idx - __float2half(grid_gpu->XN_flat[get_idx(ix - 1, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]);
+                eta[0]  = y_idx - __float2half(grid_gpu->YN_flat[get_idx(ix, iy - 1, iz, grid_gpu->nyn, grid_gpu->nzn)]);
+                zeta[0] = z_idx - __float2half(grid_gpu->ZN_flat[get_idx(ix, iy, iz - 1, grid_gpu->nyn, grid_gpu->nzn)]);
+                xi[1]   = __float2half(grid_gpu->XN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - x_idx;
+                eta[1]  = __float2half(grid_gpu->YN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - y_idx;
+                zeta[1] = __float2half(grid_gpu->ZN_flat[get_idx(ix, iy, iz, grid_gpu->nyn, grid_gpu->nzn)]) - z_idx;
 
                 for (int ii = 0; ii < 2; ii++)
                     for (int jj = 0; jj < 2; jj++)
                         for (int kk = 0; kk < 2; kk++)
-                            weight[ii][jj][kk] = __float2halfxi[ii]) * __float2half(ta[jj]) * __float2half(zta[kk]) * __float2half(grd_gpu->invVOL);
+                            weight[ii][jj][kk] = __float2half(xi[ii]) * __float2half(ta[jj]) * __float2half(zta[kk]) * __float2half(grd_gpu->invVOL);
 
                 // set to zero local electric and magnetic field_gpu
                 Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
@@ -206,17 +206,17 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 // E and B are similar to XN, YN , ZN
                 ///////////////////////////////////////////
 
-                            Exl += weight[ii][jj][kk]*__float2halffield_gpu->Ex_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
-                            Eyl += weight[ii][jj][kk]*__float2halffield_gpu->Ey_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
-                            Ezl += weight[ii][jj][kk]*__float2halffield_gpu->Ez_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
-                            Bxl += weight[ii][jj][kk]*__float2halffield_gpu->Bxn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
-                            Byl += weight[ii][jj][kk]*__float2halffield_gpu->Byn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
-                            Bzl += weight[ii][jj][kk]*__float2halffield_gpu->Bzn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Exl += weight[ii][jj][kk]*__float2half(field_gpu->Ex_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Eyl += weight[ii][jj][kk]*__float2half(field_gpu->Ey_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Ezl += weight[ii][jj][kk]*__float2half(field_gpu->Ez_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Bxl += weight[ii][jj][kk]*__float2half(field_gpu->Bxn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Byl += weight[ii][jj][kk]*__float2half(field_gpu->Byn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
+                            Bzl += weight[ii][jj][kk]*__float2half(field_gpu->Bzn_flat[get_idx(ix-ii, iy-jj, iz-kk, grid_gpu->nyn, grid_gpu->nzn)]);
                         }
 
                 // end interpolation
                 omdtsq = qomdt2*qomdt2*(Bxl*Bxl+Byl*Byl+Bzl*Bzl);
-                denom = __float2half1.0) / ( __float2half(.0) + omdtsq);
+                denom = __float2half(1.0) / ( __float2half(1.0) + omdtsq);
                 // solve the position equation
                 ut= u_idx + qomdt2*Exl;
                 vt= v_idx + qomdt2*Eyl;
@@ -234,9 +234,9 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
             } // end of iteration
 
             // update the final position and velocity
-            u_idx= __float2half2.0) * uptilde - u_idx;
-            v_idx= __float2half2.0) * vptilde - v_idx;
-            w_idx= __float2half2.0) * wptilde - w_idx;
+            u_idx= __float2half(2.0) * uptilde - u_idx;
+            v_idx= __float2half(2.0) * vptilde - v_idx;
+            w_idx= __float2half(2.0) * wptilde - w_idx;
             x_idx = xptilde + uptilde*dt_sub_cycling;
             y_idx = yptilde + vptilde*dt_sub_cycling;
             z_idx = zptilde + wptilde*dt_sub_cycling;
@@ -246,12 +246,12 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
             //////////
             ////////// BC
 
-            part_gpu->x[idx] = __half2floatx_idx);
-            part_gpu->y[idx] = __half2floaty_idx);
-            part_gpu->z[idx] = __half2floatz_idx);
-            part_gpu->u[idx] = __half2floatu_idx);
-            part_gpu->v[idx] = __half2floatv_idx);
-            part_gpu->w[idx] = __half2floatw_idx);
+            part_gpu->x[idx] = __half2float(x_idx);
+            part_gpu->y[idx] = __half2float(y_idx);
+            part_gpu->z[idx] = __half2float(z_idx);
+            part_gpu->u[idx] = __half2float(u_idx);
+            part_gpu->v[idx] = __half2float(v_idx);
+            part_gpu->w[idx] = __half2float(w_idx);
 
             // X-DIRECTION: BC particles
             if (part_gpu->x[idx] > grid_gpu->Lx){
