@@ -75,7 +75,7 @@ int main(int argc, char **argv){
     // Initialization
     initGEM(&param,&grd,&field,&field_aux,part,ids);
 
-    pre_locate(&field, &field_gpu, &field_gpu_ptr, &grd, &grid_gpu, &grid_gpu_ptr, &param, &param_gpu_ptr);
+    pre_allocate(&field, &field_gpu, &field_gpu_ptr, &grd, &grid_gpu, &grid_gpu_ptr, &param, &param_gpu_ptr);
 
     particles part_gpu;
     particles* part_gpu_ptr = NULL;
