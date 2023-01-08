@@ -172,9 +172,9 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
             for(int innter=0; innter < part_gpu->NiterMover; innter++){
                 // interpolation G-->P
 
-                ix = 2 +  int((x_idx - __float2half2_rn((grid_gpu->xStart)*grid_gpu->invdx)));
-                iy = 2 +  int((y_idx - __float2half2_rn((grid_gpu->yStart)*grid_gpu->invdy)));
-                iz = 2 +  int((z_idx - __float2half2_rn((grid_gpu->zStart)*grid_gpu->invdz)));
+                ix = 2 +  int(__high2float((x_idx - __float2half2_rn(grid_gpu->xStart)*__float2half2_rn(grid_gpu->invdx))));
+                iy = 2 +  int(__high2float((y_idx - __float2half2_rn(grid_gpu->yStart)*__float2half2_rn(grid_gpu->invdy))));
+                iz = 2 +  int(__high2float((z_idx - __float2half2_rn(grid_gpu->zStart)*__float2half2_rn(grid_gpu->invdz))));
 
                 // calculate weights
                 ///////////////////////////////////////////
@@ -194,10 +194,10 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 for (int ii = 0; ii < 2; ii++)
                     for (int jj = 0; jj < 2; jj++)
                         for (int kk = 0; kk < 2; kk++)
-                            weight[ii][jj][kk] = __float2half2_rn(xi[ii]) *__float2half2_rn(eta[jj]) * __float2half2_rn(zeta[kk]) * __float2half2_rn(grid_gpu->invVOL);
+                            weight[ii][jj][kk] = xi[ii] *eta[jj] * zeta[kk] * __float2half2_rn(grid_gpu->invVOL);
 
                 // set to zero local electric and magnetic field_gpu
-                Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
+                Exl=__float2half2_rn(0.0), Eyl = __float2half2_rn(0.0), Ezl = __float2half2_rn(0.0), Bxl = __float2half2_rn(0.0), Byl = __float2half2_rn(0.0), Bzl = __float2half2_rn(0.0);
 
                 for (int ii=0; ii < 2; ii++)
                     for (int jj=0; jj < 2; jj++)
@@ -316,6 +316,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
         }  // end of subcycling
 
 } // end of the mover
+
 
 void pre_allocate(struct EMfield* field, struct EMfield* field_gpu, struct EMfield** field_gpu_ptr,
                 struct grid* grd, struct grid* grid_gpu, struct grid** grid_gpu_ptr,
