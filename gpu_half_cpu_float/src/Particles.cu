@@ -118,7 +118,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
 
     // auxiliary variables
     // newDT dt_sub_cycling = (newDT) param_gpu->dt/((double) part_gpu->n_sub_cycles);
-    newDT dt_sub_cycling = __double2half(param_gpu->dt)/__int2half_n(part_gpu->n_sub_cycles);
+    newDT dt_sub_cycling = __double2half(param_gpu->dt)/__int2half_rn(part_gpu->n_sub_cycles);
 
     newDT dto2 = __float2half(0.5) * dt_sub_cycling;
     newDT qomdt2 = qomGPU*dto2/__double2half(param_gpu->c);
@@ -193,7 +193,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 for (int ii = 0; ii < 2; ii++)
                     for (int jj = 0; jj < 2; jj++)
                         for (int kk = 0; kk < 2; kk++)
-                            weight[ii][jj][kk] = __float2half(xi[ii]) * __float2half(ta[jj]) * __float2half(zta[kk]) * __float2half(grd_gpu->invVOL);
+                            weight[ii][jj][kk] = __float2half(xi[ii]) * __float2half(eta[jj]) * __float2half(zeta[kk]) * __float2half(grid_gpu->invVOL);
 
                 // set to zero local electric and magnetic field_gpu
                 Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
