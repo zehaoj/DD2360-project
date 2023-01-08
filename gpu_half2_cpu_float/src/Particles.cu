@@ -104,12 +104,12 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
     // newDT vthGPU = __float2half(part_gpu->vth)
     // newDT wthGPU = __float2half(part_gpu->wth)
 
-    newDT x_idx = __float2half2_rn2(part_gpu->x[idx]);
-    newDT y_idx = __float2half2_rn2(part_gpu->y[idx]);
-    newDT z_idx = __float2half2_rn2(part_gpu->z[idx]);
-    newDT u_idx = __float2half2_rn2(part_gpu->u[idx]);
-    newDT v_idx = __float2half2_rn2(part_gpu->v[idx]);
-    newDT w_idx = __float2half2_rn2(part_gpu->w[idx]);
+    newDT x_idx = __float2half2_rn(part_gpu->x[idx]);
+    newDT y_idx = __float2half2_rn(part_gpu->y[idx]);
+    newDT z_idx = __float2half2_rn(part_gpu->z[idx]);
+    newDT u_idx = __float2half2_rn(part_gpu->u[idx]);
+    newDT v_idx = __float2half2_rn(part_gpu->v[idx]);
+    newDT w_idx = __float2half2_rn(part_gpu->w[idx]);
     // /** particle arrays: 1D arrays[npmax] */
     // FPpart* x; FPpart*  y; FPpart* z; FPpart* u; FPpart* v; FPpart* w;
     // /** q must have precision of interpolated quantities: typically double. Not used in mover */
@@ -124,7 +124,8 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
     newDT qomdt2 = qomGPU*dto2/__float2half2_rn((float)(param_gpu->c));
     newDT omdtsq, denom, ut, vt, wt, udotb;
     // local (to the particle) electric and magnetic field_gpu
-    newDT Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
+    newDT Exl=__float2half2_rn(0.0), Eyl=__float2half2_rn(0.0);
+    newDT Ezl=__float2half2_rn(0.0), Bxl=__float2half2_rn(0.0), Byl=__float2half2_rn(0.0), Bzl=__float2half2_rn(0.0);
 
     // interpolation densities
     int ix,iy,iz;
@@ -193,7 +194,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
                 for (int ii = 0; ii < 2; ii++)
                     for (int jj = 0; jj < 2; jj++)
                         for (int kk = 0; kk < 2; kk++)
-                            weight[ii][jj][kk] = __float2half2_rn(xi[ii]) *__float2half2_rn(eta[jj]) __float2half2_rn(zeta[kk])__float2half2_rn(grid_gpu->invVOL);
+                            weight[ii][jj][kk] = __float2half2_rn(xi[ii]) *__float2half2_rn(eta[jj]) * __float2half2_rn(zeta[kk]) * __float2half2_rn(grid_gpu->invVOL);
 
                 // set to zero local electric and magnetic field_gpu
                 Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
