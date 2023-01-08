@@ -48,28 +48,30 @@ void particle_allocate(struct parameters* param, struct particles* part, int is)
     //////////////////////////////
     /// ALLOCATION PARTICLE ARRAYS
     //////////////////////////////
-    part->x = new FPpart[npmax];
-    part->y = new FPpart[npmax];
-    part->z = new FPpart[npmax];
+    //use pinned memory
+    gpuCheck(cudaMallocHost(&part->x, sizeof(FPpart) * npmax));
+    gpuCheck(cudaMallocHost(&part->y, sizeof(FPpart) * npmax));
+    gpuCheck(cudaMallocHost(&part->z, sizeof(FPpart) * npmax));
     // allocate velocity
-    part->u = new FPpart[npmax];
-    part->v = new FPpart[npmax];
-    part->w = new FPpart[npmax];
+    gpuCheck(cudaMallocHost(&part->u, sizeof(FPpart) * npmax));
+    gpuCheck(cudaMallocHost(&part->v, sizeof(FPpart) * npmax));
+    gpuCheck(cudaMallocHost(&part->w, sizeof(FPpart) * npmax));
     // allocate charge = q * statistical weight
-    part->q = new FPinterp[npmax];
+    gpuCheck(cudaMallocHost(&part->q, sizeof(FPinterp) * npmax));
 
 }
 /** deallocate */
 void particle_deallocate(struct particles* part)
 {
     // deallocate particle variables
-    delete[] part->x;
-    delete[] part->y;
-    delete[] part->z;
-    delete[] part->u;
-    delete[] part->v;
-    delete[] part->w;
-    delete[] part->q;
+    gpuCheck(cudaFreeHost(part->x));
+    gpuCheck(cudaFreeHost(part->y));
+    gpuCheck(cudaFreeHost(part->z));
+
+    gpuCheck(cudaFreeHost(part->u));
+    gpuCheck(cudaFreeHost(part->v));
+    gpuCheck(cudaFreeHost(part->w));
+    gpuCheck(cudaFreeHost(part->q));
 }
 
 /** GPU particle mover */
@@ -276,7 +278,7 @@ __global__ void mover_PC_gpu(particles* part_gpu, EMfield* field_gpu, grid* grid
 
 } // end of the mover
 
-void pre_locate(struct EMfield* field, struct EMfield* field_gpu, struct EMfield** field_gpu_ptr,
+void pre_allocate(struct EMfield* field, struct EMfield* field_gpu, struct EMfield** field_gpu_ptr,
                 struct grid* grd, struct grid* grid_gpu, struct grid** grid_gpu_ptr,
                 struct parameters* param, struct parameters** param_gpu_ptr){
     // locate EMfield

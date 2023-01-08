@@ -71,7 +71,7 @@ void particle_deallocate(struct particles*);
 
 /** particle mover */
 
-void pre_locate(struct EMfield*, struct EMfield*, struct EMfield**, struct grid*, struct grid*, struct grid**, struct parameters*, struct parameters**);
+void pre_allocate(struct EMfield*, struct EMfield*, struct EMfield**, struct grid*, struct grid*, struct grid**, struct parameters*, struct parameters**);
 
 
 int mover_PC_gpu_launcher_ori(struct particles*, struct EMfield*, struct grid*, struct parameters*);
